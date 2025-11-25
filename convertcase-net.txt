@@ -1,0 +1,22 @@
+#!/bin/bash
+
+SERVER_LIST="servers.txt"
+TIMESTAMP=$(date '+%Y-%m-%d_%H-%M-%S')
+OUTPUT_FILE="lsblk_gts_envs_$TIMESTAMP.txt"
+
+while read -r server; do
+    {
+        echo "==== $server ===="
+
+        result=$(ssh "$server" "lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT | grep '/opt/gts/envs'")
+
+        if [[ -z "$result" ]]; then
+            echo "OK - /opt/gts/envs not mounted."
+        else
+            echo "$result"
+        fi
+
+        echo
+    } | tee -a "$OUTPUT_FILE"
+
+done < "$SERVER_LIST"
