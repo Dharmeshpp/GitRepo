@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# File containing the list of your servers, one per line
+SERVERS_FILE="servers.txt"
+
+# The output file where results will be saved
+OUTPUT_FILE="mount_points_$(date +'%Y-%m-%d').txt"
+
+# Check if the servers file exists
+if [ ! -f "$SERVERS_FILE" ]; then
+    echo "Error: Server list file not found at '$SERVERS_FILE'"
+    exit 1
+fi
+
+# Overwrite the output file to ensure it's clean for this run
+> "$OUTPUT_FILE"
+
+# Loop through each server in the file
+while IFS= read -r server || [[ -n "$server" ]]; do
+    echo "--- Results for $server ---" >> "$OUTPUT_FILE"
+    
+    # SSH into the server and capture the output of the lsblk command
+    MOUNT_INFO=$(ssh -n "$server" "lsblk | grep /opt/gts/env")
+    
+    # Check if the MOUNT_INFO variable is empty
+    if [ -z "$MOUNT_INFO" ]; then
+        # If it's empty, the mount point was not found
+        echo "The specified mount point was not found." >> "$OUTPUT_FILE"
+    else
+        # If it's not empty, print the mount information
+        echo "$MOUNT_INFO" >> "$OUTPUT_FILE"
+    fi
+    
+    echo "" >> "$OUTPUT_FILE" # Add a blank line for readability
+done < "$SERVERS_FILE"
+
+echo "Script finished. The output is in $OUTPUT_FILE"
